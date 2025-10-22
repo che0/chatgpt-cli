@@ -80,15 +80,17 @@ def get_console_theme(light_mode: bool = False) -> Optional[Theme]:
     """
     if light_mode:
         # Custom theme for white/light backgrounds with readable colors
-        return Theme({
-            "info": "blue bold",
-            "warning": "dark_orange bold",
-            "error": "red bold",
-            "success": "dark_green bold",
-            # Override common color names for better readability on white backgrounds
-            "green": "dark_green",
-            "blue": "dark_blue",
-        })
+        return Theme(
+            {
+                "info": "blue bold",
+                "warning": "dark_orange bold",
+                "error": "red bold",
+                "success": "dark_green bold",
+                # Override common color names for better readability on white backgrounds
+                "green": "dark_green",
+                "blue": "dark_blue",
+            }
+        )
     return None  # Use default theme
 
 
@@ -223,14 +225,12 @@ class ChatGptCli:
         # Initialize the console
         self.console = Console(theme=theme)
 
-
     def add_markdown_system_message(self) -> None:
         """
         Try to force ChatGPT to always respond with well formatted code blocks and tables if markdown is enabled.
         """
         instruction = "Always use code blocks with the appropriate language tags. If asked for a table always format it using Markdown syntax."
         self.messages.append({"role": "system", "content": instruction})
-
 
     def display_expense(self, model: str) -> None:
         """
@@ -258,7 +258,6 @@ class ChatGptCli:
                 extra={"highlighter": None},
             )
 
-
     def print_markdown(self, content: str, code_blocks: Optional[dict] = None):
         """
         Print markdown formatted text to the terminal.
@@ -269,7 +268,9 @@ class ChatGptCli:
             return
 
         lines = content.split("\n")
-        code_block_id = 0 if code_blocks is None else 1 + max(code_blocks.keys(), default=0)
+        code_block_id = (
+            0 if code_blocks is None else 1 + max(code_blocks.keys(), default=0)
+        )
         code_block_open = False
         code_block_language = ""
         code_block_content = []
@@ -288,7 +289,9 @@ class ChatGptCli:
                 if code_blocks is not None:
                     code_blocks[code_block_id] = snippet_text
                 formatted_code_block = f"```{code_block_language}\n{snippet_text}\n```"
-                self.console.print(f"Block {code_block_id}", style="blue", justify="right")
+                self.console.print(
+                    f"Block {code_block_id}", style="blue", justify="right"
+                )
                 self.console.print(Markdown(formatted_code_block))
                 code_block_id += 1
                 code_block_content = []
@@ -303,7 +306,6 @@ class ChatGptCli:
         elif regular_content:  # If there's any remaining regular content, print it
             self.console.print(Markdown("\n".join(regular_content)))
 
-
     def print_messages(
         self, config: dict, messages: dict, copyable_blocks: Optional[dict] = None
     ):
@@ -311,12 +313,13 @@ class ChatGptCli:
             if not config["non_interactive"]:
                 self.console.line()
             if config["markdown"]:
-                self.print_markdown(message_response["content"].strip(), copyable_blocks)
+                self.print_markdown(
+                    message_response["content"].strip(), copyable_blocks
+                )
             else:
                 print(message_response["content"].strip())
                 if not config["non_interactive"]:
                     self.console.line()
-
 
     def start_prompt(
         self,
@@ -434,7 +437,8 @@ class ChatGptCli:
             raise KeyboardInterrupt
         except requests.Timeout:
             logger.error(
-                "[red bold]Connection timed out, try again...", extra={"highlighter": None}
+                "[red bold]Connection timed out, try again...",
+                extra={"highlighter": None},
             )
             self.messages.pop()
             raise KeyboardInterrupt
@@ -449,7 +453,9 @@ class ChatGptCli:
                 if not config["non_interactive"]:
                     self.console.line()
                 if config["markdown"]:
-                    self.print_markdown(message_response["content"].strip(), copyable_blocks)
+                    self.print_markdown(
+                        message_response["content"].strip(), copyable_blocks
+                    )
                 else:
                     print(message_response["content"].strip())
                 if not config["non_interactive"]:
@@ -459,7 +465,9 @@ class ChatGptCli:
                 self.messages.append(message_response)
                 self.prompt_tokens += usage_response["prompt_tokens"]
                 self.completion_tokens += usage_response["completion_tokens"]
-                save_history(model, self.messages, self.prompt_tokens, self.completion_tokens)
+                save_history(
+                    model, self.messages, self.prompt_tokens, self.completion_tokens
+                )
 
                 if config["non_interactive"]:
                     # In non-interactive mode there is no looping back for a second prompt, you're done.
