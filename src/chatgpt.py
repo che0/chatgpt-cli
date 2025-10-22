@@ -19,6 +19,7 @@ from prompt_toolkit.history import FileHistory
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.markdown import Markdown
+from rich.theme import Theme
 from typing import Optional
 from xdg_base_dirs import xdg_config_home
 
@@ -70,6 +71,27 @@ logging.basicConfig(
 )
 
 
+def get_console_theme(light_mode: bool = False) -> Optional[Theme]:
+    """
+    Create and return a theme optimized for the terminal background.
+
+    For light mode (white background), use darker, more saturated colors.
+    For dark mode (default), use the standard rich theme.
+    """
+    if light_mode:
+        # Custom theme for white/light backgrounds with readable colors
+        return Theme({
+            "info": "blue bold",
+            "warning": "dark_orange bold",
+            "error": "red bold",
+            "success": "dark_green bold",
+            # Override common color names for better readability on white backgrounds
+            "green": "dark_green",
+            "blue": "dark_blue",
+        })
+    return None  # Use default theme
+
+
 DEFAULT_CONFIG = {
     "supplier": "openai",
     "api-key": "<INSERT YOUR  OPENAI API KEY HERE>",
@@ -88,6 +110,7 @@ DEFAULT_CONFIG = {
     "json_mode": False,
     "use_proxy": False,
     "proxy": "socks5://127.0.0.1:2080",
+    "light_mode": False,
 }
 
 
@@ -190,7 +213,7 @@ class ChatGptCli:
     ChatGPT CLI application class that encapsulates all state variables.
     """
 
-    def __init__(self):
+    def __init__(self, theme: Optional[Theme] = None):
         # Initialize the messages history list
         # It's mandatory to pass it at each API call in order to have a conversation
         self.messages = []
@@ -198,7 +221,7 @@ class ChatGptCli:
         self.prompt_tokens = 0
         self.completion_tokens = 0
         # Initialize the console
-        self.console = Console()
+        self.console = Console(theme=theme)
 
 
     def add_markdown_system_message(self) -> None:
@@ -531,16 +554,6 @@ def main(
 
     logger.info("[bold]ChatGPT CLI", extra={"highlighter": None})
 
-    # Create ChatGptCli instance
-    cli = ChatGptCli()
-
-    history = FileHistory(HISTORY_FILE)
-
-    if multiline:
-        session = PromptSession(history=history, multiline=True)
-    else:
-        session = PromptSession(history=history)
-
     try:
         config = load_config(CONFIG_FILE)
     except FileNotFoundError:
@@ -548,6 +561,19 @@ def main(
             "[red bold]Configuration file not found", extra={"highlighter": None}
         )
         sys.exit(1)
+
+    # Create theme based on config
+    theme = get_console_theme(config.get("light_mode", False))
+
+    # Create ChatGptCli instance
+    cli = ChatGptCli(theme=theme)
+
+    history = FileHistory(HISTORY_FILE)
+
+    if multiline:
+        session = PromptSession(history=history, multiline=True)
+    else:
+        session = PromptSession(history=history)
 
     create_save_folder()
 
